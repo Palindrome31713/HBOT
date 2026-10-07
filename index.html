@@ -254,14 +254,14 @@
     let lwpCharacteristic = null;
 
     // SPIKE Port Mappings
-    const PORT_A = 0x00;
+    const PORT_A = 0x00; // Arm Motor
     const PORT_B = 0x01;
-    const PORT_C = 0x02; // Drive Left
+    const PORT_C = 0x02; // Left Drive Motor
     const PORT_D = 0x03;
-    const PORT_E = 0x04; // Drive Right
+    const PORT_E = 0x04; // Right Drive Motor
     const PORT_F = 0x05;
 
-    // LEGO Wireless Protocol v3 Standard UUIDs
+    // Standard LEGO LWP3 UUIDs
     const LWP3_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
     const LWP3_CHAR_UUID    = '00001624-1212-efde-1623-785feabcd123';
 
@@ -285,47 +285,24 @@
       }
 
       try {
-        // Try standard device picker with acceptAllDevices first
-        try {
-          bleDevice = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [
-              LWP3_SERVICE_UUID,
-              '0000fd02-0000-1000-8000-00805f9b34fb',
-              'c5f50001-8280-46da-89f4-6d8051e4aeef'
-            ]
-          });
-        } catch (filterErr) {
-          // Fallback scan if acceptAllDevices isn't permitted by system
-          bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [LWP3_SERVICE_UUID] }]
-          });
-        }
-
-        if (!bleDevice) return;
+        // Original working BLE request parameters
+        bleDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [LWP3_SERVICE_UUID, '0000fd02-0000-1000-8000-00805f9b34fb']
+        });
 
         const server = await bleDevice.gatt.connect();
-        
-        // Retrieve services and find active control characteristic
-        let service;
-        try {
-          service = await server.getPrimaryService(LWP3_SERVICE_UUID);
-        } catch (e) {
-          const services = await server.getPrimaryServices();
-          service = services[0];
-        }
-
-        const characteristics = await service.getCharacteristics();
-        lwpCharacteristic = characteristics[0];
+        const service = await server.getPrimaryService(LWP3_SERVICE_UUID);
+        lwpCharacteristic = await service.getCharacteristic(LWP3_CHAR_UUID);
 
         document.getElementById('ble-indicator').classList.add('online');
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
-        alert("Connected to " + (bleDevice.name || "SPIKE Hub") + "!");
+        alert("HBOT Spike Hub connected successfully!");
 
       } catch (err) {
-        console.error("BLE Connect Error:", err);
+        console.error("BLE Error:", err);
         if (err.name !== 'NotFoundError') {
-          alert("Connection note: " + (err.message || err));
+          alert("Connection failed: " + err.message);
         }
       }
     }
@@ -336,6 +313,7 @@
         return;
       }
 
+      // LWP3 Port Command Packet
       const command = new Uint8Array([
         0x08, 0x00, 0x81, portHex, 0x11, 0x51, 0x00, speed & 0xFF
       ]);
@@ -343,7 +321,7 @@
       try {
         await lwpCharacteristic.writeValueWithoutResponse(command);
       } catch (e) {
-        console.error("Motor write failed:", e);
+        console.error("Motor command error:", e);
       }
     }
 
