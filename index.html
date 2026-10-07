@@ -285,34 +285,48 @@
       }
 
       try {
-        // Broad filters to match any SPIKE / LEGO / Pybricks Hub without crashing
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [
-            { namePrefix: 'LEGO' },
-            { namePrefix: 'SPIKE' },
-            { namePrefix: 'Pybricks' },
-            { namePrefix: 'Hub' }
-          ],
-          optionalServices: [LWP3_SERVICE_UUID, 'c5f50001-8280-46da-89f4-6d8051e4aeef', '0000fd02-0000-1000-8000-00805f9b34fb']
-        });
+        // Try standard device picker with acceptAllDevices first
+        try {
+          bleDevice = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              LWP3_SERVICE_UUID,
+              '0000fd02-0000-1000-8000-00805f9b34fb',
+              'c5f50001-8280-46da-89f4-6d8051e4aeef'
+            ]
+          });
+        } catch (filterErr) {
+          // Fallback scan if acceptAllDevices isn't permitted by system
+          bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [LWP3_SERVICE_UUID] }]
+          });
+        }
+
+        if (!bleDevice) return;
 
         const server = await bleDevice.gatt.connect();
         
-        // Find LWP3 or Pybricks service dynamically
-        const services = await server.getPrimaryServices();
-        let service = services[0];
-        
+        // Retrieve services and find active control characteristic
+        let service;
+        try {
+          service = await server.getPrimaryService(LWP3_SERVICE_UUID);
+        } catch (e) {
+          const services = await server.getPrimaryServices();
+          service = services[0];
+        }
+
         const characteristics = await service.getCharacteristics();
         lwpCharacteristic = characteristics[0];
 
         document.getElementById('ble-indicator').classList.add('online');
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
-        alert("Successfully connected to " + (bleDevice.name || "HBOT SPIKE Hub") + "!");
+        alert("Connected to " + (bleDevice.name || "SPIKE Hub") + "!");
 
       } catch (err) {
         console.error("BLE Connect Error:", err);
-        const errorMsg = err && err.message ? err.message : "User cancelled selection or device lost signal.";
-        alert("Connection issue: " + errorMsg);
+        if (err.name !== 'NotFoundError') {
+          alert("Connection note: " + (err.message || err));
+        }
       }
     }
 
