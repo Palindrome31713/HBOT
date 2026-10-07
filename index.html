@@ -34,7 +34,6 @@
       flex-direction: column;
     }
 
-    /* SPLASH SCREEN */
     #splash-screen {
       position: fixed;
       inset: 0;
@@ -71,7 +70,6 @@
       box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.4);
     }
 
-    /* HEADER & TABS */
     header {
       background: rgba(17, 24, 39, 0.85);
       backdrop-filter: blur(12px);
@@ -146,7 +144,6 @@
       cursor: pointer;
     }
 
-    /* CONTROLS */
     .drive-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -181,6 +178,17 @@
       cursor: pointer;
     }
     .arm-btn:active { background: var(--accent-cyan); color: black; }
+    
+    .port-info {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      background: rgba(6,182,212,0.1);
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -188,7 +196,7 @@
   <!-- SPLASH SCREEN -->
   <div id="splash-screen">
     <h1 class="hero-title">HBOT COMMAND</h1>
-    <p style="color:var(--text-sub); margin-bottom:24px;">Direct LEGO Wireless Protocol v3 Control Engine</p>
+    <p style="color:var(--text-sub); margin-bottom:24px;">Direct Port C & E Driving Control System</p>
     <button class="btn-launch" onclick="launchApp()">INITIALIZE SYSTEM</button>
   </div>
 
@@ -209,7 +217,8 @@
     <!-- OVERVIEW PAGE -->
     <div id="page-overview" class="page active">
       <div class="card">
-        <h3 style="margin-bottom:16px;">System Link</h3>
+        <h3 style="margin-bottom:12px;">System Link</h3>
+        <div class="port-info">ACTIVE PORTS: DRIVE = C & E | ARM = A</div>
         <button class="btn-ble" onclick="connectLegoHub()">CONNECT HBOT SPIKE HUB</button>
       </div>
     </div>
@@ -217,25 +226,25 @@
     <!-- MOTOR CONTROLS PAGE -->
     <div id="page-control" class="page">
       <div class="card">
-        <h3>Drive Motors (Port A & Port B)</h3>
+        <h3>Drive Motors (Port C & Port E)</h3>
         <div class="drive-pad">
           <div></div>
-          <button class="btn-ctrl" onclick="moveDrive(50, 50)">▲</button>
+          <button class="btn-ctrl" onclick="moveDrive(60, 60)">▲</button>
           <div></div>
-          <button class="btn-ctrl" onclick="moveDrive(-50, 50)">◀</button>
+          <button class="btn-ctrl" onclick="moveDrive(-60, 60)">◀</button>
           <button class="btn-ctrl btn-stop" onclick="moveDrive(0, 0)">■</button>
-          <button class="btn-ctrl" onclick="moveDrive(50, -50)">▶</button>
+          <button class="btn-ctrl" onclick="moveDrive(60, -60)">▶</button>
           <div></div>
-          <button class="btn-ctrl" onclick="moveDrive(-50, -50)">▼</button>
+          <button class="btn-ctrl" onclick="moveDrive(-60, -60)">▼</button>
           <div></div>
         </div>
       </div>
 
       <div class="card">
-        <h3>Attachment Arm (Port C)</h3>
-        <button class="arm-btn" onclick="moveMotorPort(0x02, 50)">RAISE ARM (UP)</button>
-        <button class="arm-btn" onclick="moveMotorPort(0x02, -50)">LOWER ARM (DOWN)</button>
-        <button class="arm-btn" style="background:var(--accent-rose)" onclick="moveMotorPort(0x02, 0)">LOCK / STOP ARM</button>
+        <h3>Attachment Arm (Port A)</h3>
+        <button class="arm-btn" onclick="moveMotorPort(PORT_A, 50)">RAISE ARM (UP)</button>
+        <button class="arm-btn" onclick="moveMotorPort(PORT_A, -50)">LOWER ARM (DOWN)</button>
+        <button class="arm-btn" style="background:var(--accent-rose)" onclick="moveMotorPort(PORT_A, 0)">LOCK / STOP ARM</button>
       </div>
     </div>
   </main>
@@ -243,6 +252,14 @@
   <script>
     let bleDevice = null;
     let lwpCharacteristic = null;
+
+    // LEGO SPIKE Port Mappings (LWP3 Protocol Hex Codes)
+    const PORT_A = 0x00;
+    const PORT_B = 0x01;
+    const PORT_C = 0x02; // Left Drive Motor
+    const PORT_D = 0x03;
+    const PORT_E = 0x04; // Right Drive Motor
+    const PORT_F = 0x05;
 
     // LEGO LWP3 Service & Characteristic UUIDs
     const LWP3_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
@@ -258,12 +275,13 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
+      btn.classList.active = true;
       btn.classList.add('active');
     }
 
     async function connectLegoHub() {
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth not supported on this browser!");
+        alert("Web Bluetooth is not supported on this browser!\nUse Chrome on Android/PC or Bluefy on iOS.");
         return;
       }
 
@@ -279,7 +297,7 @@
 
         document.getElementById('ble-indicator').classList.add('online');
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
-        alert("HBOT Spike Hub successfully linked!");
+        alert("HBOT Spike Hub connected! Drive motors set to Ports C and E.");
 
       } catch (err) {
         console.error("BLE Connect Error:", err);
@@ -287,15 +305,14 @@
       }
     }
 
-    // Direct LWP3 Raw Byte Encoding for Single Motor Port
+    // Direct LWP3 Raw Byte Command for Single Motor
     async function moveMotorPort(portHex, speed) {
       if (!lwpCharacteristic) {
         alert("Connect HBOT via Bluetooth first!");
         return;
       }
 
-      // LWP3 Port Output Command Packet
-      // Header: [Len, HubID, MsgType(0x81), Port, StartupByte, CmdType(0x51), Mode, Speed]
+      // Packet: [Length, HubID, MsgType(0x81), Port, StartupByte, CmdType(0x51), Mode, Speed]
       const command = new Uint8Array([
         0x08, 0x00, 0x81, portHex, 0x11, 0x51, 0x00, speed & 0xFF
       ]);
@@ -307,10 +324,10 @@
       }
     }
 
-    // Direct LWP3 Drive Command for Dual Motors (Port A = 0x00, Port B = 0x01)
-    async function moveDrive(speedA, speedB) {
-      await moveMotorPort(0x00, speedA); // Port A
-      await moveMotorPort(0x01, speedB); // Port B
+    // Drive Control mapping specifically to Port C and Port E
+    async function moveDrive(speedC, speedE) {
+      await moveMotorPort(PORT_C, speedC);
+      await moveMotorPort(PORT_E, speedE);
     }
   </script>
 </body>
