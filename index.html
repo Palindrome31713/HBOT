@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HBOT — Autonomous Mission Interface</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fffbe1',
+              100: '#fff3c2',
+              400: '#fbbf24',
+              500: '#f59e0b', // Warm Amber Accent
+              600: '#d97706',
+            },
+            surface: {
+              bg: '#090d16',      // Obsidian base
+              panel: '#111827',   // Slate panel
+              card: '#1a2234',    // Card background
+              border: '#2a364f',  // Subtle 1px borders
+              hover: '#242f45',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #2a364f; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+    /* Precision Glass Panel */
+    .panel-glass {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(42, 54, 79, 0.6);
+    }
+
+    .card-matte {
+      background: #151d2c;
+      border: 1px solid #232f45;
+      transition: border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .card-matte:hover {
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    /* Custom Toggle Switch */
+    .toggle-checkbox:checked {
+      right: 0;
+      background-color: #f59e0b;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: rgba(245, 158, 11, 0.2);
+    }
+
+    /* Target Reticle Radar Animation */
+    @keyframes reticle-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+    }
+    .reticle-animate {
+      animation: reticle-pulse 2.5s infinite ease-in-out;
+    }
+
+    /* Grid Overlay Pattern */
+    .bg-blueprint {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(42, 54, 79, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(42, 54, 79, 0.15) 1px, transparent 1px);
+    }
+  </style>
+</head>
+
+<body class="bg-surface-bg text-slate-200 font-sans min-h-screen overflow-x-hidden selection:bg-brand-500 selection:text-black bg-blueprint">
+
+  <!-- INTRO SPLASH OVERLAY -->
+  <div id="intro-splash" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface-bg transition-all duration-700">
+    <div class="max-w-md w-full px-6 flex flex-col items-center text-center">
+      
+      <!-- Precision Vector Hub Graphic -->
+      <div class="w-24 h-24 mb-8 relative flex items-center justify-center">
+        <div class="absolute inset-0 rounded-2xl border border-brand-500/30 rotate-45 animate-pulse"></div>
+        <div class="w-16 h-16 rounded-xl bg-surface-panel border border-brand-500/50 flex items-center justify-center shadow-2xl">
+          <svg class="w-8 h-8 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="text-xs font-mono tracking-widest text-brand-500 uppercase mb-1">SpaceX / Robotics Telemetry Suite</div>
+      <h1 class="text-3xl font-bold tracking-tight text-white mb-2 font-mono">HBOT SYSTEM OS</h1>
+      <p class="text-sm text-slate-400 mb-8">LEGO® SPIKE™ Prime Autonomous Navigation & Dispatch Interface</p>
+
+      <!-- System Diagnostic List -->
+      <div class="w-full bg-surface-panel/80 rounded-xl p-4 border border-surface-border text-left font-mono text-xs text-slate-400 mb-8 space-y-2">
+        <div class="flex justify-between items-center">
+          <span>> WEB BLE PROTOCOL</span>
+          <span class="text-emerald-400">READY</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>> SPATIAL MAP ENGINE</span>
+          <span class="text-emerald-400">ACTIVE</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>> MOTOR DRIVER BUS</span>
+          <span class="text-emerald-400">INITIALIZED</span>
+        </div>
+      </div>
+
+      <button onclick="dismissSplash()" class="w-full py-3.5 px-6 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-semibold font-mono text-sm tracking-wide transition-all shadow-lg shadow-brand-500/20 active:scale-[0.98]">
+        INITIALIZE INTERFACE
+      </button>
+
+      <div class="mt-6 text-[11px] font-mono text-slate-600">v2.4.0 • Encrypted BLE Nordic UART Protocol</div>
+    </div>
+  </div>
+
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="app-shell" class="min-h-screen flex flex-col">
+    
+    <!-- Top Header -->
+    <header class="panel-glass sticky top-0 z-40 px-4 lg:px-8 py-3 border-b border-surface-border flex items-center justify-between">
+      
+      <!-- Brand Title & Device Indicator -->
+      <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/40 flex items-center justify-center text-brand-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-mono font-bold text-base tracking-tight text-white">HBOT</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-card border border-surface-border text-slate-400">SPIKE #01</span>
+            </div>
+            <span class="text-[11px] text-slate-400 font-mono block leading-none mt-0.5" id="nav-hub-status">Standby • Ready for connection</span>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1 border-l border-surface-border pl-6 text-xs font-mono">
+          <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="px-3 py-1.5 rounded-lg bg-surface-card text-brand-500 font-semibold border border-brand-500/30">DASHBOARD</button>
+          <button onclick="switchTab('map')" id="tab-btn-map" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-card/50 transition-colors">CAMPUS MAP</button>
+          <button onclick="switchTab('controls')" id="tab-btn-controls" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-card/50 transition-colors">CONTROLS</button>
+          <button onclick="switchTab('specs')" id="tab-btn-specs" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-card/50 transition-colors">HUB SPECS</button>
+        </nav>
+      </div>
+
+      <!-- Quick Action Right Status Bar -->
+      <div class="flex items-center space-x-3">
+        
+        <!-- Battery Quick Pill -->
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-card border border-surface-border text-xs font-mono">
+          <svg class="w-3.5 h-3.5 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM18 8a1 1 0 100 4v-4z"/>
+          </svg>
+          <span id="header-battery-val" class="font-bold text-white">88%</span>
+          <span class="text-slate-500">|</span>
+          <span class="text-slate-400">8.2V</span>
+        </div>
+
+        <!-- BLE Connect Pill Button -->
+        <button id="ble-button" onclick="toggleBluetoothConnection()" class="px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-2 bg-surface-card border border-surface-border hover:border-brand-500 text-slate-300 hover:text-brand-500 transition-all">
+          <span id="ble-pill-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="ble-pill-text">CONNECT BLE</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile View Sub-Navigation -->
+    <nav class="md:hidden flex border-b border-surface-border bg-surface-panel px-2 py-2 overflow-x-auto text-xs font-mono space-x-2">
+      <button onclick="switchTab('dashboard')" id="mob-btn-dashboard" class="px-3 py-1.5 rounded-lg bg-surface-card text-brand-500 font-semibold border border-brand-500/30 whitespace-nowrap">DASHBOARD</button>
+      <button onclick="switchTab('map')" id="mob-btn-map" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white whitespace-nowrap">CAMPUS MAP</button>
+      <button onclick="switchTab('controls')" id="mob-btn-controls" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white whitespace-nowrap">CONTROLS</button>
+      <button onclick="switchTab('specs')" id="mob-btn-specs" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white whitespace-nowrap">SPECS</button>
+    </nav>
+
+
+    <!-- MAIN TAB CONTENTS CONTAINER -->
+    <main class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto">
+
+      <!-- TAB 1: DASHBOARD OVERVIEW -->
+      <section id="tab-content-dashboard" class="space-y-6">
+        
+        <!-- Top Telemetry Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1: Power System -->
+          <div class="card-matte rounded-xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>POWER CELL</span>
+              <span class="text-emerald-400">HEALTH 100%</span>
+            </div>
+            <div class="my-3 flex items-baseline justify-between">
+              <div>
+                <span id="dash-battery-num" class="text-3xl font-mono font-bold text-white">88</span>
+                <span class="text-sm font-mono text-slate-400">%</span>
+              </div>
+              <span class="text-xs font-mono text-brand-500 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">Li-ion 2100mAh</span>
+            </div>
+            <div class="w-full bg-surface-bg h-1.5 rounded-full overflow-hidden">
+              <div id="dash-battery-bar" class="bg-brand-500 h-full w-[88%] transition-all duration-500"></div>
+            </div>
+          </div>
+
+          <!-- Card 2: Location Sector -->
+          <div class="card-matte rounded-xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>CURRENT LOCATION</span>
+              <span class="text-brand-500 font-semibold">ZONE A</span>
+            </div>
+            <div class="my-3">
+              <span id="dash-location-node" class="text-lg font-mono font-bold text-white block truncate">Robotics Hub #01</span>
+              <span class="text-xs font-mono text-slate-500">Sector 4 • Ground Level</span>
+            </div>
+            <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+              <span>Target Waypoint:</span>
+              <span id="dash-target-waypoint" class="text-slate-200">Stationary</span>
+            </div>
+          </div>
+
+          <!-- Card 3: BLE Connection & RSSI -->
+          <div class="card-matte rounded-xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>SIGNAL & TELEMETRY</span>
+              <span id="dash-signal-db" class="text-slate-400">-58 dBm</span>
+            </div>
+            <div class="my-3 flex items-baseline justify-between">
+              <div>
+                <span id="dash-uptime" class="text-2xl font-mono font-bold text-white">00:14:22</span>
+                <span class="text-xs font-mono text-slate-500 block">Uptime Session</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-1 text-[11px] font-mono text-slate-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Nordic NUS Protocol (115200 baud)</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Environmental & Gyro -->
+          <div class="card-matte rounded-xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>SYSTEM TEMP / IMU</span>
+              <span class="text-slate-400">6-AXIS GYRO</span>
+            </div>
+            <div class="my-3 flex items-baseline justify-between">
+              <div>
+                <span id="dash-temp" class="text-2xl font-mono font-bold text-white">28.4</span>
+                <span class="text-sm font-mono text-slate-400">°C</span>
+              </div>
+              <div class="text-right text-xs font-mono text-slate-400">
+                <div>Pitch: <span id="dash-pitch" class="text-slate-200">0.2°</span></div>
+                <div>Roll: <span id="dash-roll" class="text-slate-200">-0.1°</span></div>
+              </div>
+            </div>
+            <div class="w-full bg-surface-bg h-1.5 rounded-full overflow-hidden">
+              <div class="bg-blue-500 h-full w-[40%]"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Middle Quick Action Hardware Triggers -->
+        <div class="card-matte rounded-xl p-5 border border-surface-border">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-4 flex items-center justify-between">
+            <span>DIRECT HUB HARDWARE COMMANDS</span>
+            <span class="text-[11px] text-slate-500">Instant Execution</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+            <button onclick="triggerHubBuzzer()" class="p-3 rounded-lg bg-surface-panel border border-surface-border hover:border-brand-500 text-slate-200 hover:text-brand-500 transition-all text-left flex flex-col justify-between h-20">
+              <span class="text-slate-400 text-[10px]">SPEAKER</span>
+              <span class="font-bold">Beep Buzzer</span>
+            </button>
+
+            <button onclick="toggleLEDMatrixPattern()" class="p-3 rounded-lg bg-surface-panel border border-surface-border hover:border-brand-500 text-slate-200 hover:text-brand-500 transition-all text-left flex flex-col justify-between h-20">
+              <span class="text-slate-400 text-[10px]">5x5 MATRIX</span>
+              <span class="font-bold">Cycle LED Pattern</span>
+            </button>
+
+            <button onclick="calibrateGyro()" class="p-3 rounded-lg bg-surface-panel border border-surface-border hover:border-brand-500 text-slate-200 hover:text-brand-500 transition-all text-left flex flex-col justify-between h-20">
+              <span class="text-slate-400 text-[10px]">INTERNAL IMU</span>
+              <span class="font-bold">Zero Gyroscope</span>
+            </button>
+
+            <button onclick="triggerEmergencyStop()" class="p-3 rounded-lg bg-red-950/30 border border-red-800/40 hover:border-red-500 text-red-400 transition-all text-left flex flex-col justify-between h-20">
+              <span class="text-red-500/80 text-[10px]">SAFETY OVERRIDE</span>
+              <span class="font-bold">E-STOP ALL MOTORS</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sensor Status Telemetry Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Distance Sensor Live Stream -->
+          <div class="card-matte rounded-xl p-5 space-y-3">
+            <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+              <span>PORT D: ULTRASONIC SENSOR</span>
+              <span class="text-emerald-400">ACTIVE</span>
+            </div>
+            <div class="flex items-baseline space-x-2">
+              <span id="sonar-val" class="text-4xl font-mono font-bold text-white">45</span>
+              <span class="text-sm font-mono text-slate-400">cm proximity distance</span>
+            </div>
+            <div class="w-full bg-surface-bg h-2 rounded-full overflow-hidden">
+              <div id="sonar-bar" class="bg-brand-500 h-full w-[45%] transition-all"></div>
+            </div>
+            <div class="text-[11px] font-mono text-slate-500">Detects obstacles from 1cm to 200cm range</div>
+          </div>
+
+          <!-- Color Sensor Telemetry -->
+          <div class="card-matte rounded-xl p-5 space-y-3">
+            <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+              <span>PORT E: COLOR & REFLECTANCE</span>
+              <span class="text-emerald-400">ACTIVE</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div id="color-swatch" class="w-8 h-8 rounded-lg bg-amber-500 border border-white/20"></div>
+              <div>
+                <span id="color-name" class="text-lg font-mono font-bold text-white block">Amber Yellow</span>
+                <span class="text-xs font-mono text-slate-500">Reflectivity Index: 82%</span>
+              </div>
+            </div>
+            <div class="text-[11px] font-mono text-slate-500">Used for ground line tracking and payload verification</div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- TAB 2: INTERACTIVE CAMPUS MAP -->
+      <section id="tab-content-map" class="hidden space-y-6">
+        
+        <div class="card-matte rounded-xl p-5 border border-surface-border">
+          
+          <!-- Map Header Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-surface-border">
+            <div>
+              <h2 class="font-mono font-bold text-base text-white">CAMPUS SPATIAL DISPATCH MAP</h2>
+              <p class="text-xs text-slate-400">Click anywhere on the map grid to set a target coordinate waypoint for HBOT</p>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-surface-panel border border-surface-border hover:border-brand-500 text-xs font-mono text-slate-300 transition-colors flex items-center space-x-2">
+                <svg class="w-3.5 h-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Upload School Photo</span>
+                <input type="file" accept="image/*" class="hidden" onchange="handleMapPhotoUpload(event)">
+              </label>
+
+              <button onclick="clearWaypoints()" class="px-3 py-1.5 rounded-lg bg-surface-panel border border-surface-border hover:border-red-500 text-xs font-mono text-slate-400 hover:text-red-400 transition-colors">
+                Reset Queue
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Map Canvas Container -->
+          <div id="map-frame" onclick="handleMapClick(event)" class="relative w-full h-[450px] bg-surface-bg rounded-xl border border-surface-border overflow-hidden cursor-crosshair select-none flex items-center justify-center">
+            
+            <!-- Default Background Blueprint or User Uploaded Photo -->
+            <div id="map-canvas-bg" class="absolute inset-0 bg-cover bg-center transition-opacity opacity-80" style="background-image: radial-gradient(circle at 50% 50%, #151d2c 0%, #090d16 100%);">
+              <div class="absolute inset-0 bg-blueprint opacity-60"></div>
+            </div>
+
+            <!-- Upload Prompt Placeholder text -->
+            <div id="map-upload-prompt" class="absolute z-10 text-center pointer-events-none p-4">
+              <span class="text-xs font-mono text-slate-400 bg-surface-panel/90 px-3 py-1.5 rounded-lg border border-surface-border">
+                Tactical Spatial Grid Active • Click to set destination
+              </span>
+            </div>
+
+            <!-- HBOT Live Avatar Pointer -->
+            <div id="hbot-map-avatar" class="absolute z-30 transition-all duration-1000 ease-out transform -translate-x-1/2 -translate-y-1/2" style="left: 20%; top: 80%;">
+              <div class="relative flex items-center justify-center">
+                <div class="w-8 h-8 rounded-full border border-brand-500 bg-brand-500/20 reticle-animate absolute"></div>
+                <div class="w-5 h-5 rounded-full bg-brand-500 text-slate-950 font-mono font-bold text-[9px] flex items-center justify-center shadow-lg border border-white">
+                  BOT
+                </div>
+              </div>
+            </div>
+
+            <!-- Placed Target Waypoint Ping -->
+            <div id="target-waypoint-ping" class="absolute z-20 hidden transform -translate-x-1/2 -translate-y-1/2" style="left: 0%; top: 0%;">
+              <div class="relative flex items-center justify-center">
+                <div class="w-6 h-6 rounded-full border border-emerald-400 bg-emerald-400/20 animate-ping absolute"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-400 shadow-md"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Dispatch Controls Footer -->
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+            <div class="flex items-center space-x-4">
+              <div>
+                <span class="text-slate-500">TARGET XY:</span>
+                <span id="target-coords-text" class="text-white font-bold ml-1">None Selected</span>
+              </div>
+              <div>
+                <span class="text-slate-500">DISPATCH STATUS:</span>
+                <span id="dispatch-status-text" class="text-brand-500 font-bold ml-1">IDLE</span>
+              </div>
+            </div>
+
+            <button id="dispatch-btn" onclick="dispatchToTarget()" disabled class="px-5 py-2 rounded-lg bg-surface-border text-slate-500 font-bold tracking-wider transition-all disabled:opacity-50">
+              DISPATCH HBOT TO WAYPOINT
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- TAB 3: ROBOT MANUAL CONTROLS -->
+      <section id="tab-content-controls" class="hidden space-y-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- D-PAD Gamepad Panel (7 Cols) -->
+          <div class="lg:col-span-7 card-matte rounded-xl p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center border-b border-surface-border pb-3 mb-6">
+                <h2 class="font-mono font-bold text-base text-white">MANUAL MOTOR DRIVE SYSTEM</h2>
+                <span class="text-xs font-mono text-brand-500">REALTIME BLE OVERRIDE</span>
+              </div>
+
+              <!-- D-PAD Interface Grid -->
+              <div class="flex flex-col items-center justify-center my-6">
+                <div class="grid grid-cols-3 gap-3 w-60">
+                  
+                  <div></div>
+                  <!-- Forward -->
+                  <button onmousedown="sendDriveCommand('FORWARD')" onmouseup="sendDriveCommand('STOP')" ontouchstart="sendDriveCommand('FORWARD')" ontouchend="sendDriveCommand('STOP')" class="h-16 rounded-xl bg-surface-panel border border-surface-border hover:border-brand-500 active:bg-brand-500/20 text-slate-200 flex items-center justify-center shadow-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                  </button>
+                  <div></div>
+
+                  <!-- Left -->
+                  <button onmousedown="sendDriveCommand('LEFT')" onmouseup="sendDriveCommand('STOP')" ontouchstart="sendDriveCommand('LEFT')" ontouchend="sendDriveCommand('STOP')" class="h-16 rounded-xl bg-surface-panel border border-surface-border hover:border-brand-500 active:bg-brand-500/20 text-slate-200 flex items-center justify-center shadow-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+
+                  <!-- Stop Center Button -->
+                  <button onclick="sendDriveCommand('STOP')" class="h-16 rounded-xl bg-red-950/40 border border-red-800/60 hover:bg-red-900/60 text-red-400 font-mono font-bold text-xs flex items-center justify-center shadow-lg">
+                    STOP
+                  </button>
+
+                  <!-- Right -->
+                  <button onmousedown="sendDriveCommand('RIGHT')" onmouseup="sendDriveCommand('STOP')" ontouchstart="sendDriveCommand('RIGHT')" ontouchend="sendDriveCommand('STOP')" class="h-16 rounded-xl bg-surface-panel border border-surface-border hover:border-brand-500 active:bg-brand-500/20 text-slate-200 flex items-center justify-center shadow-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+
+                  <div></div>
+                  <!-- Backward -->
+                  <button onmousedown="sendDriveCommand('BACKWARD')" onmouseup="sendDriveCommand('STOP')" ontouchstart="sendDriveCommand('BACKWARD')" ontouchend="sendDriveCommand('STOP')" class="h-16 rounded-xl bg-surface-panel border border-surface-border hover:border-brand-500 active:bg-brand-500/20 text-slate-200 flex items-center justify-center shadow-lg transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div></div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="text-[11px] font-mono text-slate-500 text-center">
+              Press & hold keys to drive • Release to brake automatically
+            </div>
+          </div>
+
+          <!-- Speed & Drive Settings (5 Cols) -->
+          <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Speed Selector Slider -->
+            <div class="card-matte rounded-xl p-5 space-y-4">
+              <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>MOTOR POWER LIMIT</span>
+                <span id="speed-display-text" class="text-brand-500 font-bold">75% DUTY</span>
+              </div>
+
+              <input id="drive-speed-slider" type="range" min="20" max="100" value="75" oninput="updateSpeedSetting(this.value)" class="w-full h-2 bg-surface-bg rounded-lg appearance-none cursor-pointer accent-brand-500">
+
+              <div class="flex justify-between text-[11px] font-mono text-slate-500">
+                <span>20% (Precise)</span>
+                <span>60% (Nominal)</span>
+                <span>100% (Max)</span>
+              </div>
+            </div>
+
+            <!-- Autonomous Patrol Route Toggle Switch -->
+            <div class="card-matte rounded-xl p-5 flex items-center justify-between">
+              <div>
+                <span class="font-mono font-bold text-sm text-white block">AUTONOMOUS PATROL</span>
+                <span class="text-xs font-mono text-slate-400">Loop waypoints continuously</span>
+              </div>
+
+              <!-- Custom Toggle -->
+              <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" id="patrol-toggle" onchange="toggleAutonomousPatrol(this.checked)" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-slate-400 border-4 border-surface-card appearance-none cursor-pointer transition-all duration-200"/>
+                <label for="patrol-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-panel cursor-pointer border border-surface-border"></label>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- TAB 4: HUB HARDWARE SPECIFICATIONS -->
+      <section id="tab-content-specs" class="hidden space-y-6">
+        
+        <div class="card-matte rounded-xl p-6 border border-surface-border">
+          <div class="border-b border-surface-border pb-4 mb-6">
+            <h2 class="font-mono font-bold text-lg text-white">LEGO® SPIKE™ PRIME HUB SPECIFICATIONS</h2>
+            <p class="text-xs font-mono text-slate-400">Pinout, motor port assignments, and Bluetooth GATT service descriptors</p>
+          </div>
+
+          <!-- Motor & Sensor Port Matrix -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono text-xs mb-8">
+            
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-brand-500 font-bold block mb-1">PORT A — DRIVE MOTOR L</span>
+              <p class="text-slate-300">Medium Angular Motor (Left Wheel Drive)</p>
+              <span class="text-[10px] text-slate-500 block mt-2">180 RPM Max • Built-in Encoder</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-brand-500 font-bold block mb-1">PORT B — DRIVE MOTOR R</span>
+              <p class="text-slate-300">Medium Angular Motor (Right Wheel Drive)</p>
+              <span class="text-[10px] text-slate-500 block mt-2">180 RPM Max • Built-in Encoder</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-brand-500 font-bold block mb-1">PORT C — ATTACHMENT ARM</span>
+              <p class="text-slate-300">Large Angular Motor (Manipulator)</p>
+              <span class="text-[10px] text-slate-500 block mt-2">High Torque Payload Actuator</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-emerald-400 font-bold block mb-1">PORT D — ULTRASONIC SENSOR</span>
+              <p class="text-slate-300">Distance & Proximity Module</p>
+              <span class="text-[10px] text-slate-500 block mt-2">LED Light Ring • 1-200cm Range</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-emerald-400 font-bold block mb-1">PORT E — COLOR SENSOR</span>
+              <p class="text-slate-300">Reflectance & RGB Color Reader</p>
+              <span class="text-[10px] text-slate-500 block mt-2">100Hz Sample Rate Ground Sensor</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-panel border border-surface-border">
+              <span class="text-blue-400 font-bold block mb-1">PORT F — AUXILIARY / EXPANSION</span>
+              <p class="text-slate-300">Force / Touch Sensor or Expansion</p>
+              <span class="text-[10px] text-slate-500 block mt-2">Pressure & Bump Detection</span>
+            </div>
+
+          </div>
+
+          <!-- Microcontroller Tech Sheet -->
+          <div class="bg-surface-panel rounded-xl p-5 border border-surface-border font-mono text-xs space-y-2 text-slate-300">
+            <span class="text-white font-bold block mb-3 border-b border-surface-border pb-2">CORE CONTROLLER SPECS</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+              <div><strong class="text-slate-500">MCU:</strong> STM32F413 ARM Cortex-M4 @ 100MHz</div>
+              <div><strong class="text-slate-500">Display:</strong> 5x5 White LED Matrix Display</div>
+              <div><strong class="text-slate-500">Bluetooth:</strong> BLE 4.2 Nordic nRF52832</div>
+              <div><strong class="text-slate-500">IMU:</strong> 6-Axis Gyroscope & Accelerometer</div>
+              <div><strong class="text-slate-500">GATT Service:</strong> 0000fd02-0000-1000-8000-00805f9b34fb</div>
+              <div><strong class="text-slate-500">Firmware:</strong> Official LEGO SPIKE MicroPython OS</div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <script>
+    /* State Management */
+    let bleDevice = null;
+    let bleCharacteristic = null;
+    let isConnected = false;
+    let currentSpeed = 75;
+    let targetWaypoint = null;
+    let isPatrolling = false;
+
+    /* Splash Screen Handlers */
+    function dismissSplash() {
+      const splash = document.getElementById('intro-splash');
+      splash.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => splash.remove(), 700);
+      startTelemetryLoop();
+    }
+
+    /* Tab Switcher */
+    function switchTab(tabName) {
+      const tabs = ['dashboard', 'map', 'controls', 'specs'];
+      
+      tabs.forEach(t => {
+        const content = document.getElementById(`tab-content-${t}`);
+        const desktopBtn = document.getElementById(`tab-btn-${t}`);
+        const mobileBtn = document.getElementById(`mob-btn-${t}`);
+
+        if (t === tabName) {
+          content.classList.remove('hidden');
+          if (desktopBtn) desktopBtn.className = 'px-3 py-1.5 rounded-lg bg-surface-card text-brand-500 font-semibold border border-brand-500/30';
+          if (mobileBtn) mobileBtn.className = 'px-3 py-1.5 rounded-lg bg-surface-card text-brand-500 font-semibold border border-brand-500/30 whitespace-nowrap';
+        } else {
+          content.classList.add('hidden');
+          if (desktopBtn) desktopBtn.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-surface-card/50 transition-colors';
+          if (mobileBtn) mobileBtn.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white whitespace-nowrap';
+        }
+      });
+    }
+
+    /* Web Bluetooth API Core Functions */
+    async function toggleBluetoothConnection() {
+      if (isConnected) {
+        if (bleDevice && bleDevice.gatt.connected) {
+          bleDevice.gatt.disconnect();
+        }
+        updateBLEUI(false);
+      } else {
+        try {
+          console.log('Initiating Web Bluetooth scan for SPIKE Hub...');
+          
+          bleDevice = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              '0000fd02-0000-1000-8000-00805f9b34fb', // SPIKE Hub Service
+              '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  // Standard NUS UUID
+            ]
+          });
+
+          bleDevice.addEventListener('gattserverdisconnected', () => updateBLEUI(false));
+
+          const server = await bleDevice.gatt.connect();
+          console.log('BLE GATT Connected to SPIKE Hub');
+
+          updateBLEUI(true);
+        } catch (err) {
+          console.warn('BLE Request dismissed or failed:', err);
+          alert('Bluetooth pairing notice: Selection was canceled or BLE is unavailable on this device. Dashboard operating in Telemetry Simulation Mode.');
+        }
+      }
+    }
+
+    function updateBLEUI(connected) {
+      isConnected = connected;
+      const dot = document.getElementById('ble-pill-dot');
+      const text = document.getElementById('ble-pill-text');
+      const statusLabel = document.getElementById('nav-hub-status');
+
+      if (connected) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        text.innerText = 'HUB CONNECTED';
+        text.className = 'text-emerald-400 font-bold';
+        statusLabel.innerText = 'Connected • Active Bluetooth Stream';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        text.innerText = 'CONNECT BLE';
+        text.className = 'text-slate-300';
+        statusLabel.innerText = 'Standby • Ready for connection';
+      }
+    }
+
+    /* Command Transmit Helper */
+    async function sendDriveCommand(action) {
+      console.log(`Command Executed: [${action}] at Speed: ${currentSpeed}%`);
+      
+      if (isConnected && bleCharacteristic) {
+        try {
+          const encoder = new TextEncoder();
+          const commandJSON = JSON.stringify({ action: action, speed: currentSpeed });
+          await bleCharacteristic.writeValue(encoder.encode(commandJSON + '\r\n'));
+        } catch (e) {
+          console.error('Failed to write to BLE characteristic:', e);
+        }
+      }
+    }
+
+    function updateSpeedSetting(val) {
+      currentSpeed = val;
+      document.getElementById('speed-display-text').innerText = `${val}% DUTY`;
+    }
+
+    /* Map Interactive Waypoint Handlers */
+    function handleMapClick(event) {
+      const frame = document.getElementById('map-frame');
+      const rect = frame.getBoundingClientRect();
+      
+      const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
+      const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
+
+      targetWaypoint = { x: xPercent.toFixed(1), y: yPercent.toFixed(1) };
+
+      // Update Ping Position
+      const ping = document.getElementById('target-waypoint-ping');
+      ping.style.left = `${targetWaypoint.x}%`;
+      ping.style.top = `${targetWaypoint.y}%`;
+      ping.classList.remove('hidden');
+
+      // Update Footer UI
+      document.getElementById('target-coords-text').innerText = `X: ${targetWaypoint.x}% | Y: ${targetWaypoint.y}%`;
+      
+      const btn = document.getElementById('dispatch-btn');
+      btn.disabled = false;
+      btn.className = 'px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold tracking-wider transition-all cursor-pointer shadow-lg';
+    }
+
+    function dispatchToTarget() {
+      if (!targetWaypoint) return;
+
+      const statusText = document.getElementById('dispatch-status-text');
+      statusText.innerText = 'EN ROUTE';
+      statusText.className = 'text-emerald-400 font-bold ml-1 animate-pulse';
+
+      // Animate HBOT map avatar
+      const avatar = document.getElementById('hbot-map-avatar');
+      avatar.style.left = `${targetWaypoint.x}%`;
+      avatar.style.top = `${targetWaypoint.y}%`;
+
+      document.getElementById('dash-target-waypoint').innerText = `X:${targetWaypoint.x} Y:${targetWaypoint.y}`;
+
+      setTimeout(() => {
+        statusText.innerText = 'ARRIVED AT WAYPOINT';
+        statusText.className = 'text-brand-500 font-bold ml-1';
+      }, 1200);
+    }
+
+    function clearWaypoints() {
+      targetWaypoint = null;
+      document.getElementById('target-waypoint-ping').classList.add('hidden');
+      document.getElementById('target-coords-text').innerText = 'None Selected';
+      document.getElementById('dispatch-status-text').innerText = 'IDLE';
+      
+      const btn = document.getElementById('dispatch-btn');
+      btn.disabled = true;
+      btn.className = 'px-5 py-2 rounded-lg bg-surface-border text-slate-500 font-bold tracking-wider transition-all disabled:opacity-50';
+    }
+
+    function handleMapPhotoUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const canvasBg = document.getElementById('map-canvas-bg');
+          canvasBg.style.backgroundImage = `url('${e.target.result}')`;
+          canvasBg.style.opacity = '0.95';
+          document.getElementById('map-upload-prompt').style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    /* Direct Hub Triggers */
+    function triggerHubBuzzer() {
+      alert('Buzzer Trigger Sent: Play tone 440Hz on SPIKE Hub Speaker');
+      sendDriveCommand('BEEP');
+    }
+
+    function toggleLEDMatrixPattern() {
+      alert('LED Pattern Trigger: Cycle 5x5 LED array icon');
+      sendDriveCommand('LED_PATTERN');
+    }
+
+    function calibrateGyro() {
+      alert('Gyroscope Calibrated: Offset reset to zero degrees.');
+      document.getElementById('dash-pitch').innerText = '0.0°';
+      document.getElementById('dash-roll').innerText = '0.0°';
+    }
+
+    function triggerEmergencyStop() {
+      sendDriveCommand('STOP');
+      alert('E-STOP COMMAND ISSUED: All motor outputs cut immediately.');
+    }
+
+    function toggleAutonomousPatrol(active) {
+      isPatrolling = active;
+      if (active) {
+        alert('Autonomous Patrol Enabled: HBOT will cycle saved campus coordinates.');
+      }
+    }
+
+    /* Telemetry Data Stream Loop */
+    function startTelemetryLoop() {
+      setInterval(() => {
+        // Gyro jitter simulation
+        const pitch = (Math.sin(Date.now() / 1000) * 0.4).toFixed(1);
+        const roll = (Math.cos(Date.now() / 1200) * 0.3).toFixed(1);
+        document.getElementById('dash-pitch').innerText = `${pitch}°`;
+        document.getElementById('dash-roll').innerText = `${roll}°`;
+
+        // Ultrasonic fluctuation
+        const distance = Math.floor(45 + Math.sin(Date.now() / 900) * 4);
+        document.getElementById('sonar-val').innerText = distance;
+        document.getElementById('sonar-bar').style.width = `${distance}%`;
+      }, 400);
+    }
+  </script>
+
+</body>
+</html>
