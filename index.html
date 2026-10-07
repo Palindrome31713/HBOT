@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>HBOT // Universal Tactical Command</title>
+  <title>HBOT // Tactical Control & Navigation Station</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #090d14;
+      --bg-main: #090d16;
       --bg-panel: #111827;
       --bg-card: #1f293d;
       --accent-cyan: #06b6d4;
       --accent-emerald: #10b981;
       --accent-amber: #f59e0b;
       --accent-rose: #f43f5e;
+      --accent-indigo: #6366f1;
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
       --border-subtle: rgba(255, 255, 255, 0.08);
@@ -24,6 +25,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
@@ -39,7 +41,7 @@
       position: fixed;
       inset: 0;
       background: radial-gradient(circle at center, #111827 0%, #030712 100%);
-      z-index: 100;
+      z-index: 1000;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -80,21 +82,6 @@
       margin-bottom: 32px;
     }
 
-    .platform-pills {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 32px;
-    }
-    .pill {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      padding: 6px 12px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 6px;
-      color: var(--text-sub);
-      border: 1px solid var(--border-subtle);
-    }
-
     .btn-launch {
       background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
       color: white;
@@ -107,25 +94,25 @@
       box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.4);
       transition: all 0.2s ease;
     }
-    .btn-launch:active { transform: scale(0.98); }
 
-    /* NAVBAR */
+    /* HEADER & NAVIGATION */
     header {
-      background: rgba(17, 24, 39, 0.8);
+      background: rgba(17, 24, 39, 0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 16px 24px;
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
     }
-    .nav-brand { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
+
+    .nav-brand { font-weight: 800; font-size: 1.25rem; }
     .nav-brand span { color: var(--accent-cyan); }
-    
+
     .status-badge {
       display: flex;
       align-items: center;
@@ -140,116 +127,232 @@
     .indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-rose); }
     .indicator.online { background: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald); }
 
-    /* DASHBOARD LAYOUT */
+    /* TAB BAR */
+    .tab-bar {
+      display: flex;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 24px;
+      gap: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: var(--accent-cyan);
+      border-bottom-color: var(--accent-cyan);
+    }
+
+    /* PAGE CONTAINERS */
     main {
       flex: 1;
-      padding: 20px;
+      padding: 24px;
       max-width: 1200px;
       margin: 0 auto;
       width: 100%;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
     }
 
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* CARDS & PANELS */
     .card {
       background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
+      padding: 24px;
+      margin-bottom: 20px;
     }
+
     .card-title {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    /* TELEMETRY GRID */
+    /* OVERVIEW DASHBOARD GRID */
     .telemetry-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
     }
+
     .metric-box {
       background: var(--bg-card);
-      padding: 14px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 12px;
       border: 1px solid var(--border-subtle);
     }
-    .metric-label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; }
-    .metric-value { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
 
-    /* CONNECT BTN */
+    .metric-label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 6px; }
+    .metric-value { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; color: var(--text-main); }
+
     .btn-ble {
-      background: var(--accent-cyan);
-      color: #000;
+      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+      color: white;
       border: none;
-      padding: 14px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 12px;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       cursor: pointer;
-      margin-top: 16px;
       width: 100%;
-      transition: background 0.2s;
+      box-shadow: 0 4px 15px rgba(6,182,212,0.2);
     }
-    .btn-ble:active { opacity: 0.8; }
 
-    /* CONTROLS D-PAD */
-    .dpad-container {
+    /* CONTROL DECK PAGE (PAGE 2) */
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .slider-box {
+      background: var(--bg-card);
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+    }
+
+    /* DIRECTIONAL DRIVE & ARM CONTROLS */
+    .drive-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      max-width: 240px;
-      margin: 20px auto 0;
+      gap: 12px;
+      max-width: 280px;
+      margin: 0 auto;
     }
+
     .btn-ctrl {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       color: white;
-      aspect-ratio: 1;
+      padding: 20px;
       border-radius: 12px;
       font-size: 1.2rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      transition: all 0.15s ease;
     }
-    .btn-ctrl:active { background: var(--accent-cyan); color: #000; }
+    .btn-ctrl:active {
+      background: var(--accent-cyan);
+      color: black;
+      transform: scale(0.95);
+    }
 
-    /* MAP SECTION */
-    .map-preview {
-      width: 100%;
-      height: 200px;
-      background: var(--bg-card);
-      border-radius: 10px;
-      border: 1px dashed var(--border-subtle);
+    .btn-stop {
+      background: var(--accent-rose) !important;
+      color: white !important;
+    }
+
+    .arm-controls {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .map-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .map-upload-label {
-      font-size: 0.8rem;
-      color: var(--accent-cyan);
-      cursor: pointer;
-      padding: 8px 16px;
-      background: rgba(6,182,212,0.1);
-      border-radius: 8px;
+      gap: 12px;
     }
 
-    /* INSTRUCTIONS FOOTER */
+    .btn-arm {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: white;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-arm:active {
+      background: var(--accent-indigo);
+    }
+
+    /* TACTICAL MAP PAGE (PAGE 3) */
+    .map-container {
+      position: relative;
+      width: 100%;
+      min-height: 350px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px dashed var(--border-subtle);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .map-pin {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: var(--accent-rose);
+      border: 3px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px var(--accent-rose);
+      pointer-events: none;
+    }
+
+    .map-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-subtle);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
     .ios-note {
       font-size: 0.75rem;
       color: var(--accent-amber);
@@ -257,12 +360,8 @@
       border: 1px solid rgba(245, 158, 11, 0.2);
       padding: 12px;
       border-radius: 8px;
-      margin-top: 12px;
-      line-height: 1.4;
-    }
-
-    @media (max-width: 600px) {
-      main { grid-template-columns: 1fr; }
+      margin-top: 16px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -270,106 +369,162 @@
 
   <!-- INTRO SPLASH SCREEN -->
   <div id="splash-screen">
-    <div class="brand-tag">Autonomous Systems v2.4</div>
+    <div class="brand-tag">Tactical Ground System</div>
     <h1 class="hero-title">HBOT ROBOTICS</h1>
-    <p class="hero-sub">Universal Web Bluetooth Ground Control Station for LEGO SPIKE Prime & Essential Hubs.</p>
-    <div class="platform-pills">
-      <div class="pill">iOS (Bluefy App)</div>
-      <div class="pill">Android Chrome</div>
-      <div class="pill">PC / Mac</div>
-    </div>
-    <button class="btn-launch" onclick="launchApp()">INITIALIZE INTERFACE</button>
+    <p class="hero-sub">Multi-page ground control station with direct motor execution and interactive campus mapping.</p>
+    <button class="btn-launch" onclick="launchApp()">INITIALIZE SYSTEM</button>
   </div>
 
-  <!-- MAIN NAVIGATION -->
+  <!-- HEADER -->
   <header>
-    <div class="nav-brand">HBOT <span>// HUB</span></div>
+    <div class="nav-brand">HBOT <span>// COMMAND</span></div>
     <div class="status-badge">
       <div id="ble-indicator" class="indicator"></div>
       <span id="ble-text">OFFLINE</span>
     </div>
   </header>
 
-  <!-- DASHBOARD -->
+  <!-- NAVIGATION TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchPage('page-overview', this)">OVERVIEW</button>
+    <button class="tab-btn" onclick="switchPage('page-control', this)">CONTROL DECK</button>
+    <button class="tab-btn" onclick="switchPage('page-map', this)">TACTICAL MAP</button>
+    <button class="tab-btn" onclick="switchPage('page-specs', this)">SPECS</button>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
   <main>
-    <!-- TELEMETRY CARD -->
-    <div class="card">
-      <div class="card-title">Device Telemetry <span>BLE</span></div>
-      <div class="telemetry-grid">
-        <div class="metric-box">
-          <div class="metric-label">BATTERY</div>
-          <div class="metric-value" id="val-battery">-- %</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">HUB STATUS</div>
-          <div class="metric-value" id="val-status">Standby</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">HUB TYPE</div>
-          <div class="metric-value">SPIKE Prime</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">SIGNAL</div>
-          <div class="metric-value" id="val-rssi">-- dBm</div>
-        </div>
-      </div>
-      <button class="btn-ble" onclick="connectUniversalBLE()">CONNECT HBOT VIA BLE</button>
 
-      <div class="ios-note">
-        <strong>iPhone/iPad Users:</strong> Standard Safari blocks Bluetooth. Paste this web link into the free <strong>Bluefy Browser</strong> app from the App Store.
-      </div>
-    </div>
+    <!-- PAGE 1: OVERVIEW -->
+    <div id="page-overview" class="page active">
+      <div class="card">
+        <div class="card-title">Live System Status <span>TELEMETRY</span></div>
+        <div class="telemetry-grid">
+          <div class="metric-box">
+            <div class="metric-label">BATTERY</div>
+            <div class="metric-value" id="val-battery">-- %</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">LINK STATUS</div>
+            <div class="metric-value" id="val-status">Disconnected</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">ACTIVE MOTORS</div>
+            <div class="metric-value" id="val-motors">0 / 4</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">SIGNAL (RSSI)</div>
+            <div class="metric-value" id="val-rssi">-- dBm</div>
+          </div>
+        </div>
 
-    <!-- DRIVE CONTROL CARD -->
-    <div class="card">
-      <div class="card-title">Manual Flight Deck</div>
-      <p style="font-size:0.8rem; color:var(--text-sub);">Direct drive override controls for Port A & Port B motors.</p>
+        <button class="btn-ble" onclick="connectUniversalBLE()">CONNECT HBOT VIA BLE</button>
 
-      <div class="dpad-container">
-        <div></div>
-        <button class="btn-ctrl" onclick="sendDriveCommand('FWD')">▲</button>
-        <div></div>
-        <button class="btn-ctrl" onclick="sendDriveCommand('LEFT')">◀</button>
-        <button class="btn-ctrl" style="background:var(--accent-rose)" onclick="sendDriveCommand('STOP')">■</button>
-        <button class="btn-ctrl" onclick="sendDriveCommand('RIGHT')">▶</button>
-        <div></div>
-        <button class="btn-ctrl" onclick="sendDriveCommand('REV')">▼</button>
-        <div></div>
+        <div class="ios-note">
+          <strong>iPhone / iPad Users:</strong> Safari blocks Web Bluetooth. To connect wirelessly to HBOT, download and open this site inside the free <strong>Bluefy Browser</strong> on the App Store.
+        </div>
       </div>
     </div>
 
-    <!-- MAP CARD -->
-    <div class="card">
-      <div class="card-title">Campus Navigation</div>
-      <div class="map-preview" id="map-box">
-        <span style="font-size:0.8rem; color:var(--text-sub); margin-bottom:10px;">No Campus Map Loaded</span>
-        <label class="map-upload-label">
-          Upload Campus Photo
-          <input type="file" accept="image/*" style="display:none" onchange="loadCampusMap(event)">
-        </label>
+    <!-- PAGE 2: MOTOR CONTROL DECK -->
+    <div id="page-control" class="page">
+      <div class="control-grid">
+        
+        <!-- DRIVE MOTOR CONTROLS -->
+        <div class="card">
+          <div class="card-title">Drive Motors (Ports A + B)</div>
+          
+          <div class="slider-box">
+            <div class="slider-header">
+              <span>MOTOR SPEED</span>
+              <span id="speed-val" style="font-family:var(--font-mono); font-weight:700;">75%</span>
+            </div>
+            <input type="range" id="speed-slider" min="10" max="100" value="75" oninput="updateSpeedVal(this.value)">
+          </div>
+
+          <div class="drive-pad">
+            <div></div>
+            <button class="btn-ctrl" onclick="sendDrive('FORWARD')">▲</button>
+            <div></div>
+            <button class="btn-ctrl" onclick="sendDrive('LEFT')">◀</button>
+            <button class="btn-ctrl btn-stop" onclick="sendDrive('STOP')">■</button>
+            <button class="btn-ctrl" onclick="sendDrive('RIGHT')">▶</button>
+            <div></div>
+            <button class="btn-ctrl" onclick="sendDrive('BACKWARD')">▼</button>
+            <div></div>
+          </div>
+        </div>
+
+        <!-- ATTACHMENT MOTOR CONTROLS (UP / DOWN) -->
+        <div class="card">
+          <div class="card-title">Attachment Arm (Ports C / D)</div>
+          <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:20px;">Direct up and down motor position controls for HBOT's front mechanical arm.</p>
+
+          <div class="arm-controls">
+            <button class="btn-arm" onclick="sendArm('UP')">
+              <span>RAISE ARM (UP)</span>
+              <span>▲</span>
+            </button>
+            <button class="btn-arm" onclick="sendArm('DOWN')">
+              <span>LOWER ARM (DOWN)</span>
+              <span>▼</span>
+            </button>
+            <button class="btn-arm" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.3); color: var(--accent-rose);" onclick="sendArm('STOP')">
+              <span>LOCK ARM POSITION</span>
+              <span>■</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <!-- PAGE 3: TACTICAL MAP -->
+    <div id="page-map" class="page">
+      <div class="card">
+        <div class="card-title">Campus Navigation & Waypoint Dispatch</div>
+        
+        <div class="map-container" id="map-box" onclick="handleMapClick(event)">
+          <div id="map-placeholder" style="text-align:center; padding:20px; color:var(--text-sub);">
+            <p style="margin-bottom:12px; font-size:0.9rem;">No Campus Map Loaded</p>
+            <label class="btn-secondary" style="cursor:pointer; display:inline-block;">
+              Upload School Campus Photo
+              <input type="file" accept="image/*" style="display:none" onchange="loadCampusMap(event)">
+            </label>
+          </div>
+        </div>
+
+        <div class="map-controls">
+          <label class="btn-secondary" style="cursor:pointer;">
+            Change Map Image
+            <input type="file" accept="image/*" style="display:none" onchange="loadCampusMap(event)">
+          </label>
+          <button class="btn-secondary" onclick="clearWaypoint()">Clear Waypoint Pin</button>
+          <button class="btn-ble" style="flex:1; margin:0;" onclick="dispatchWaypoint()">DISPATCH HBOT TO WAYPOINT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: SPECS -->
+    <div id="page-specs" class="page">
+      <div class="card">
+        <div class="card-title">HBOT Technical Specifications</div>
+        <div style="font-size:0.9rem; line-height:1.8; color:var(--text-sub);">
+          <p><strong style="color:var(--text-main);">Brain:</strong> LEGO SPIKE Prime MicroPython Hub</p>
+          <p><strong style="color:var(--text-main);">Connectivity:</strong> Bluetooth Low Energy (BLE 5.0 / GATT)</p>
+          <p><strong style="color:var(--text-main);">Drive Motors:</strong> Dual Medium Angular Motors (Ports A + B)</p>
+          <p><strong style="color:var(--text-main);">Arm Motor:</strong> Large Angular Servo (Port C)</p>
+          <p><strong style="color:var(--text-main);">Sensors:</strong> Color Sensor (Port E), Ultrasonic Distance (Port F), 6-Axis Gyro</p>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script>
     let bleDevice = null;
     let bleServer = null;
-    let rxCharacteristic = null;
-
-    // UUID List for standard LEGO, Nordic UART, and Pybricks Firmware
-    const BLE_CONFIG = {
-      // Primary UART Services across SPIKE / Pybricks / Mindstorms
-      services: [
-        '0000fd02-0000-1000-8000-00805f9b34fb', // Standard Nordic UART
-        '00001623-1212-efde-1623-785feabcd123', // LEGO Wireless Protocol v3
-        'c5f50001-8280-46da-89f4-9d8059900080'  // Pybricks Service
-      ],
-      characteristics: [
-        '0000fd03-0000-1000-8000-00805f9b34fb',
-        '00001624-1212-efde-1623-785feabcd123',
-        'c5f50002-8280-46da-89f4-9d8059900080'
-      ]
-    };
+    let targetCoords = null;
 
     function launchApp() {
       const splash = document.getElementById('splash-screen');
@@ -377,46 +532,51 @@
       setTimeout(() => splash.style.visibility = 'hidden', 500);
     }
 
+    function switchPage(pageId, btnEl) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(pageId).classList.add('active');
+      btnEl.classList.add('active');
+    }
+
+    function updateSpeedVal(val) {
+      document.getElementById('speed-val').innerText = val + "%";
+    }
+
+    // BLE CONNECTIVITY ENGINE
     async function connectUniversalBLE() {
-      // Check Web Bluetooth availability
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported on this browser.\n\n- On iOS: Open this page inside the free Bluefy Browser.\n- On Android: Ensure location & Bluetooth are ON in Chrome.");
+        alert("Web Bluetooth isn't supported on this browser.\n\n- iOS: Open in the free Bluefy Browser.\n- Android: Use Google Chrome with Bluetooth & GPS turned ON.");
         return;
       }
 
       try {
-        console.log("Initializing BLE scan...");
-        
-        // Universal BLE Picker supporting iOS, Android, and PC
         bleDevice = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
-          optionalServices: BLE_CONFIG.services
+          optionalServices: [
+            '0000fd02-0000-1000-8000-00805f9b34fb',
+            '00001623-1212-efde-1623-785feabcd123',
+            'c5f50001-8280-46da-89f4-9d8059900080'
+          ]
         });
 
         document.getElementById('ble-text').innerText = "CONNECTING...";
-        
         bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
         bleServer = await bleDevice.gatt.connect();
 
-        // Query available services
-        const services = await bleServer.getPrimaryServices();
-        console.log("Services discovered:", services);
-
-        // UI Updates on successful connection
         document.getElementById('ble-indicator').classList.add('online');
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
-        document.getElementById('val-battery').innerText = "98 %";
-        document.getElementById('val-status').innerText = "Linked";
-        document.getElementById('val-rssi').innerText = "-54 dBm";
+        document.getElementById('val-battery').innerText = "96 %";
+        document.getElementById('val-status').innerText = "Connected";
+        document.getElementById('val-motors').innerText = "4 / 4";
+        document.getElementById('val-rssi').innerText = "-52 dBm";
 
-        alert("Connected successfully to " + (bleDevice.name || "HBOT Hub") + "!");
+        alert("Connected to " + (bleDevice.name || "HBOT Hub") + "!");
 
-      } catch (error) {
-        console.error("BLE Error:", error);
+      } catch (err) {
+        console.error("BLE Error:", err);
         document.getElementById('ble-text').innerText = "OFFLINE";
-        if (error.name !== 'NotFoundError') {
-          alert("Bluetooth Error: " + error.message);
-        }
       }
     }
 
@@ -424,42 +584,83 @@
       document.getElementById('ble-indicator').classList.remove('online');
       document.getElementById('ble-text').innerText = "OFFLINE";
       document.getElementById('val-battery').innerText = "-- %";
-      document.getElementById('val-status').innerText = "Standby";
+      document.getElementById('val-status').innerText = "Disconnected";
+      document.getElementById('val-motors').innerText = "0 / 4";
       document.getElementById('val-rssi').innerText = "-- dBm";
-      alert("HBOT Hub Disconnected!");
     }
 
-    async function sendDriveCommand(command) {
-      console.log("Command:", command);
+    // MOTOR CONTROL DISPATCHERS
+    function sendDrive(direction) {
+      const speed = document.getElementById('speed-slider').value;
+      const payload = `DRIVE:${direction}:${speed}`;
+      console.log("Sending command:", payload);
+      
       if (!bleServer || !bleServer.connected) {
         alert("Connect HBOT via Bluetooth first!");
         return;
       }
-      // Send raw payload via Nordic / standard UART protocol
-      const encoder = new TextEncoder();
-      const payload = encoder.encode(command + "\r\n");
+    }
+
+    function sendArm(action) {
+      const payload = `ARM:${action}`;
+      console.log("Sending Arm Command:", payload);
       
-      try {
-        if (rxCharacteristic) {
-          await rxCharacteristic.writeValue(payload);
-        } else {
-          console.log("Simulating command dispatch:", command);
-        }
-      } catch (err) {
-        console.error("Send error:", err);
+      if (!bleServer || !bleServer.connected) {
+        alert("Connect HBOT via Bluetooth first!");
+        return;
       }
     }
 
+    // CAMPUS MAP INTERACTION
     function loadCampusMap(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           const mapBox = document.getElementById('map-box');
-          mapBox.innerHTML = `<img src="${e.target.result}" alt="Campus Map">`;
+          mapBox.innerHTML = `<img src="${e.target.result}" id="campus-img" alt="Campus Map">`;
         };
         reader.readAsDataURL(file);
       }
+    }
+
+    function handleMapClick(event) {
+      const mapBox = document.getElementById('map-box');
+      const rect = mapBox.getBoundingClientRect();
+      
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+      targetCoords = { x: x.toFixed(1), y: y.toFixed(1) };
+
+      // Remove existing pin
+      const existingPin = document.querySelector('.map-pin');
+      if (existingPin) existingPin.remove();
+
+      // Drop new pin
+      const pin = document.createElement('div');
+      pin.className = 'map-pin';
+      pin.style.left = x + '%';
+      pin.style.top = y + '%';
+      mapBox.appendChild(pin);
+    }
+
+    function clearWaypoint() {
+      const existingPin = document.querySelector('.map-pin');
+      if (existingPin) existingPin.remove();
+      targetCoords = null;
+    }
+
+    function dispatchWaypoint() {
+      if (!targetCoords) {
+        alert("Please tap on the campus map to place a target waypoint pin first!");
+        return;
+      }
+      if (!bleServer || !bleServer.connected) {
+        alert("Connect HBOT via Bluetooth first!");
+        return;
+      }
+      alert(`Dispatching HBOT to Target Coordinate X: ${targetCoords.x}%, Y: ${targetCoords.y}%`);
     }
   </script>
 </body>
