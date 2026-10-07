@@ -178,7 +178,7 @@
       cursor: pointer;
     }
     .arm-btn:active { background: var(--accent-cyan); color: black; }
-    
+
     .port-info {
       font-family: var(--font-mono);
       font-size: 0.75rem;
@@ -253,15 +253,15 @@
     let bleDevice = null;
     let lwpCharacteristic = null;
 
-    // LEGO SPIKE Port Mappings (LWP3 Protocol Hex Codes)
+    // SPIKE Port Mappings
     const PORT_A = 0x00;
     const PORT_B = 0x01;
-    const PORT_C = 0x02; // Left Drive Motor
+    const PORT_C = 0x02; // Drive Left
     const PORT_D = 0x03;
-    const PORT_E = 0x04; // Right Drive Motor
+    const PORT_E = 0x04; // Drive Right
     const PORT_F = 0x05;
 
-    // LEGO LWP3 Service & Characteristic UUIDs
+    // LEGO Wireless Protocol v3 Standard UUIDs
     const LWP3_SERVICE_UUID = '00001623-1212-efde-1623-785feabcd123';
     const LWP3_CHAR_UUID    = '00001624-1212-efde-1623-785feabcd123';
 
@@ -275,44 +275,53 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
-      btn.classList.active = true;
       btn.classList.add('active');
     }
 
     async function connectLegoHub() {
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported on this browser!\nUse Chrome on Android/PC or Bluefy on iOS.");
+        alert("Web Bluetooth is not supported on this browser!");
         return;
       }
 
       try {
+        // Broad filters to match any SPIKE / LEGO / Pybricks Hub without crashing
         bleDevice = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [LWP3_SERVICE_UUID, '0000fd02-0000-1000-8000-00805f9b34fb']
+          filters: [
+            { namePrefix: 'LEGO' },
+            { namePrefix: 'SPIKE' },
+            { namePrefix: 'Pybricks' },
+            { namePrefix: 'Hub' }
+          ],
+          optionalServices: [LWP3_SERVICE_UUID, 'c5f50001-8280-46da-89f4-6d8051e4aeef', '0000fd02-0000-1000-8000-00805f9b34fb']
         });
 
         const server = await bleDevice.gatt.connect();
-        const service = await server.getPrimaryService(LWP3_SERVICE_UUID);
-        lwpCharacteristic = await service.getCharacteristic(LWP3_CHAR_UUID);
+        
+        // Find LWP3 or Pybricks service dynamically
+        const services = await server.getPrimaryServices();
+        let service = services[0];
+        
+        const characteristics = await service.getCharacteristics();
+        lwpCharacteristic = characteristics[0];
 
         document.getElementById('ble-indicator').classList.add('online');
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
-        alert("HBOT Spike Hub connected! Drive motors set to Ports C and E.");
+        alert("Successfully connected to " + (bleDevice.name || "HBOT SPIKE Hub") + "!");
 
       } catch (err) {
         console.error("BLE Connect Error:", err);
-        alert("Connection failed: " + err.message);
+        const errorMsg = err && err.message ? err.message : "User cancelled selection or device lost signal.";
+        alert("Connection issue: " + errorMsg);
       }
     }
 
-    // Direct LWP3 Raw Byte Command for Single Motor
     async function moveMotorPort(portHex, speed) {
       if (!lwpCharacteristic) {
         alert("Connect HBOT via Bluetooth first!");
         return;
       }
 
-      // Packet: [Length, HubID, MsgType(0x81), Port, StartupByte, CmdType(0x51), Mode, Speed]
       const command = new Uint8Array([
         0x08, 0x00, 0x81, portHex, 0x11, 0x51, 0x00, speed & 0xFF
       ]);
@@ -324,7 +333,6 @@
       }
     }
 
-    // Drive Control mapping specifically to Port C and Port E
     async function moveDrive(speedC, speedE) {
       await moveMotorPort(PORT_C, speedC);
       await moveMotorPort(PORT_E, speedE);
