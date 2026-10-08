@@ -4,9 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>HBOT // Tactical Control Station</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --bg-main: #090d16;
@@ -23,7 +25,14 @@
       --font-sans: 'Plus Jakarta Sans', sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
 
     body {
       background-color: var(--bg-main);
@@ -32,116 +41,29 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
-    #splash-screen {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at center, #111827 0%, #030712 100%);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 24px;
-      transition: opacity 0.5s ease, visibility 0.5s;
-    }
+    .font-mono { font-family: var(--font-mono); }
 
-    .hero-title {
-      font-size: clamp(2.5rem, 8vw, 4rem);
-      font-weight: 800;
-      letter-spacing: -1px;
-      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 16px;
-    }
-
-    .btn-launch {
-      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-      color: white;
-      border: none;
-      padding: 16px 40px;
-      font-size: 1rem;
-      font-weight: 700;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.4);
-    }
-
-    header {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-brand { font-weight: 800; font-size: 1.25rem; }
-    .nav-brand span { color: var(--accent-cyan); }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      background: rgba(255,255,255,0.05);
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--border-subtle);
-    }
-    .indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-rose); }
-    .indicator.online { background: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald); }
-
-    .tab-bar {
-      display: flex;
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0 24px;
-      gap: 12px;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-sub);
-      padding: 14px 18px;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-    }
-    .tab-btn.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
-
-    main { flex: 1; padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
-    .page { display: none; }
-    .page.active { display: block; }
-
-    .card {
+    .glass-card {
       background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
 
-    .btn-ble {
-      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-      color: white;
-      border: none;
-      padding: 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      width: 100%;
-      cursor: pointer;
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+    .animate-pulse-glow { animation: pulse-glow 2s infinite ease-in-out; }
+
+    .btn-touch {
+      transition: all 0.15s ease;
+    }
+    .btn-touch:active {
+      transform: scale(0.96);
     }
 
     .drive-pad {
@@ -161,6 +83,9 @@
       font-size: 1.2rem;
       font-weight: 700;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn-ctrl:active { background: var(--accent-cyan); color: black; }
     .btn-stop { background: var(--accent-rose) !important; color: white !important; }
@@ -189,71 +114,200 @@
       margin-bottom: 16px;
       display: inline-block;
     }
+
+    /* Canvas Map Overlay styling */
+    #map-canvas-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #020617;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      touch-action: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
   </style>
 </head>
-<body>
+<body class="antialiased selection:bg-cyan-500 selection:text-black">
 
-  <!-- SPLASH SCREEN -->
-  <div id="splash-screen">
-    <h1 class="hero-title">HBOT COMMAND</h1>
-    <p style="color:var(--text-sub); margin-bottom:24px;">Direct Port C & E Driving Control System</p>
-    <button class="btn-launch" onclick="launchApp()">INITIALIZE SYSTEM</button>
+  <div id="splash-screen" class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-slate-950 p-6 text-center transition-all duration-500">
+    <div class="relative mb-6">
+      <div class="absolute -inset-4 rounded-full bg-cyan-500/20 blur-xl animate-pulse-glow"></div>
+      <div class="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-cyan-500/30 bg-slate-900 shadow-2xl">
+        <svg class="h-12 w-12 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+    </div>
+    
+    <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-2 font-mono">HBOT <span class="text-cyan-400">//</span> COMMAND</h1>
+    <p class="text-slate-400 max-w-sm text-sm sm:text-base mb-8">Tactical Control & Autonomous Floor Path Planning for SPIKE Prime</p>
+    
+    <button onclick="launchApp()" class="btn-touch px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 hover:brightness-110">
+      INITIALIZE SYSTEM
+    </button>
   </div>
 
-  <header>
-    <div class="nav-brand">HBOT <span>// HUB</span></div>
-    <div class="status-badge">
-      <div id="ble-indicator" class="indicator"></div>
-      <span id="ble-text">OFFLINE</span>
+  <header class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 px-4 sm:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-3 w-3 rounded-full bg-cyan-400 animate-pulse"></div>
+      <span class="font-extrabold text-lg sm:text-xl tracking-wider text-white">HBOT <span class="text-cyan-400">// HUB</span></span>
+    </div>
+
+    <div class="flex items-center gap-2 bg-slate-800/80 border border-white/10 px-3 py-1.5 rounded-full text-xs font-mono">
+      <div id="ble-indicator" class="h-2.5 w-2.5 rounded-full bg-rose-500 transition-colors duration-300"></div>
+      <span id="ble-text" class="text-slate-300 font-bold tracking-wide">OFFLINE</span>
     </div>
   </header>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchPage('page-overview', this)">OVERVIEW</button>
-    <button class="tab-btn" onclick="switchPage('page-control', this)">MOTOR CONTROLS</button>
+  <!-- TAB NAVIGATION BAR -->
+  <div class="bg-slate-900 border-b border-white/10 px-4 sm:px-8 flex gap-2 overflow-x-auto">
+    <button id="tab-overview-btn" onclick="switchTab('overview')" class="px-5 py-3.5 text-xs font-mono font-bold tracking-wider text-cyan-400 border-b-2 border-cyan-400 transition-colors whitespace-nowrap">
+      OVERVIEW
+    </button>
+    <button id="tab-control-btn" onclick="switchTab('control')" class="px-5 py-3.5 text-xs font-mono font-bold tracking-wider text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors whitespace-nowrap">
+      MOTOR CONTROLS
+    </button>
+    <button id="tab-map-btn" onclick="switchTab('map')" class="px-5 py-3.5 text-xs font-mono font-bold tracking-wider text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors whitespace-nowrap">
+      MAP & PATH PLANNING
+    </button>
   </div>
 
-  <main>
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
     <!-- OVERVIEW PAGE -->
-    <div id="page-overview" class="page active">
-      <div class="card">
-        <h3 style="margin-bottom:12px;">System Link</h3>
-        <div class="port-info">ACTIVE PORTS: DRIVE = C & E | ARM = A</div>
-        <button class="btn-ble" onclick="connectLegoHub()">CONNECT HBOT SPIKE HUB</button>
+    <section id="tab-overview" class="space-y-6">
+      <div class="glass-card p-6">
+        <h2 class="text-xl font-bold text-white mb-2">System Link Interface</h2>
+        <p class="text-slate-400 text-sm mb-4">Connect directly to your SPIKE Prime Hub over Web Bluetooth using standard LWP3 or Pybricks BLE profile.</p>
+
+        <div class="port-info">ACTIVE MAP: PORT C & E (DRIVE) | PORT A (ARM)</div>
+
+        <button id="btn-connect" onclick="connectLegoHub()" class="btn-touch w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white rounded-xl shadow-lg shadow-cyan-500/20 hover:brightness-110 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a10 10 0 0114.142 0M1.414 8.414a15 15 0 0121.172 0"></path></svg>
+          CONNECT HBOT SPIKE HUB
+        </button>
       </div>
-    </div>
+
+      <div class="glass-card p-6">
+        <h3 class="text-sm font-mono font-bold text-slate-300 uppercase tracking-wider mb-3">Diagnostic Console Log</h3>
+        <div id="console-log" class="bg-slate-950/80 border border-white/5 rounded-xl p-4 font-mono text-xs text-slate-400 h-36 overflow-y-auto space-y-1">
+          <div class="text-slate-500">> System initialized. Ready for Bluetooth pairing.</div>
+        </div>
+      </div>
+    </section>
 
     <!-- MOTOR CONTROLS PAGE -->
-    <div id="page-control" class="page">
-      <div class="card">
-        <h3>Drive Motors (Port C & Port E)</h3>
+    <section id="tab-control" class="hidden space-y-6">
+      <div class="glass-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">Drive Motors</h2>
+            <p class="text-xs text-slate-400 font-mono">PORTS: Left = Port C | Right = Port E</p>
+          </div>
+          <span class="px-2.5 py-1 rounded bg-slate-800 border border-white/10 text-xs font-mono text-cyan-400">PWM Control</span>
+        </div>
+
         <div class="drive-pad">
           <div></div>
           <button class="btn-ctrl" onclick="moveDrive(60, -60)">▲</button>
           <div></div>
+
           <button class="btn-ctrl" onclick="moveDrive(-60, -60)">◀</button>
           <button class="btn-ctrl btn-stop" onclick="moveDrive(0, 0)">■</button>
           <button class="btn-ctrl" onclick="moveDrive(60, 60)">▶</button>
+
           <div></div>
           <button class="btn-ctrl" onclick="moveDrive(-60, 60)">▼</button>
           <div></div>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Attachment Arm (Port A)</h3>
+      <div class="glass-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">Attachment Arm</h2>
+            <p class="text-xs text-slate-400 font-mono">PORT: Arm = Port A</p>
+          </div>
+          <span class="px-2.5 py-1 rounded bg-slate-800 border border-white/10 text-xs font-mono text-emerald-400">Single Motor</span>
+        </div>
+
         <button class="arm-btn" onclick="moveMotorPort(PORT_A, 50)">RAISE ARM (UP)</button>
         <button class="arm-btn" onclick="moveMotorPort(PORT_A, -50)">LOWER ARM (DOWN)</button>
         <button class="arm-btn" style="background:var(--accent-rose)" onclick="moveMotorPort(PORT_A, 0)">LOCK / STOP ARM</button>
       </div>
-    </div>
+    </section>
+
+    <section id="tab-map" class="hidden space-y-6">
+      <div class="glass-card p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white">Floor Map & Path Plotter</h2>
+            <p class="text-xs text-slate-400">Upload a floor photo or blueprint, tap to plot waypoints, and auto-navigate your HBOT.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="btn-touch px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-xs font-mono text-cyan-400 cursor-pointer flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              Upload Map
+              <input type="file" id="map-upload-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
+            </label>
+            <button onclick="clearPath()" class="btn-touch px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg text-xs font-mono text-rose-400">
+              Clear Path
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Map Canvas Container -->
+        <div id="map-canvas-container">
+          <canvas id="map-canvas"></canvas>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-white/5">
+            <div class="text-slate-500 mb-0.5">Waypoints</div>
+            <div id="path-count-text" class="text-white font-bold">0 Points</div>
+          </div>
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-white/5">
+            <div class="text-slate-500 mb-0.5">Est. Distance</div>
+            <div id="path-distance-text" class="text-cyan-400 font-bold">0.0 m</div>
+          </div>
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-white/5">
+            <div class="text-slate-500 mb-0.5">Est. Time</div>
+            <div id="path-time-text" class="text-emerald-400 font-bold">0 sec</div>
+          </div>
+          <div class="bg-slate-950/60 p-2.5 rounded-lg border border-white/5">
+            <div class="text-slate-500 mb-0.5">Status</div>
+            <div id="execution-status-text" class="text-amber-400 font-bold">IDLE</div>
+          </div>
+        </div>
+
+        <!-- Path Execution Control Buttons -->
+        <div class="flex gap-3 pt-2">
+          <button id="btn-execute-route" onclick="executeRoute()" class="btn-touch flex-1 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold font-mono rounded-xl shadow-lg shadow-emerald-500/20 hover:brightness-110 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            EXECUTE ROUTE
+          </button>
+          <button onclick="emergencyStopRoute()" class="btn-touch py-4 px-6 bg-rose-600 hover:bg-rose-500 text-white font-bold font-mono rounded-xl shadow-lg shadow-rose-600/30 flex items-center justify-center">
+            STOP
+          </button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <script>
+    // State Variables
     let bleDevice = null;
     let lwpCharacteristic = null;
 
-    // SPIKE Port Mappings
+    // LEGO SPIKE Port Mappings
     const PORT_A = 0x00; // Arm Motor
     const PORT_B = 0x01;
     const PORT_C = 0x02; // Left Drive Motor
@@ -267,24 +321,83 @@
     const PYBRICKS_SERVICE_UUID = 'c5f50001-8280-46da-89f4-6d8051e4aeef';
     const PYBRICKS_CHAR_UUID    = 'c5f50002-8280-46da-89f4-6d8051e4aeef';
 
+    // Map & Path Planning State
+    let mapImage = null;
+    let pathWaypoints = [];
+    let isExecutingRoute = false;
+    let currentExecutionIndex = 0;
+    let routeTimeoutId = null;
+
+    // Canvas Element Handles
+    let canvas, ctx;
+
+    window.onload = function () {
+      canvas = document.getElementById('map-canvas');
+      ctx = canvas.getContext('2d');
+
+      // Add Canvas Mouse / Touch Listener
+      canvas.addEventListener('pointerdown', handleCanvasClick);
+      window.addEventListener('resize', resizeCanvas);
+      
+      // Draw default synthetic grid floor plan
+      loadDefaultGridMap();
+    }
+
+    function logToConsole(message, type = 'info') {
+      const consoleBox = document.getElementById('console-log');
+      const entry = document.createElement('div');
+      
+      if (type === 'error') entry.className = 'text-rose-400 font-semibold';
+      else if (type === 'success') entry.className = 'text-emerald-400 font-semibold';
+      else entry.className = 'text-slate-400';
+
+      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+      entry.innerText = `[${timestamp}] ${message}`;
+      consoleBox.appendChild(entry);
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
     function launchApp() {
       const splash = document.getElementById('splash-screen');
       splash.style.opacity = '0';
-      setTimeout(() => splash.style.visibility = 'hidden', 500);
+      setTimeout(() => splash.style.display = 'none', 500);
     }
 
-    function switchPage(pageId, btn) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      btn.classList.add('active');
+    function switchTab(tab) {
+      const pages = {
+        overview: document.getElementById('tab-overview'),
+        control: document.getElementById('tab-control'),
+        map: document.getElementById('tab-map')
+      };
+      const btns = {
+        overview: document.getElementById('tab-overview-btn'),
+        control: document.getElementById('tab-control-btn'),
+        map: document.getElementById('tab-map-btn')
+      };
+
+      Object.keys(pages).forEach(key => {
+        if (key === tab) {
+          pages[key].classList.remove('hidden');
+          btns[key].className = "px-5 py-3.5 text-xs font-mono font-bold tracking-wider text-cyan-400 border-b-2 border-cyan-400 transition-colors whitespace-nowrap";
+        } else {
+          pages[key].classList.add('hidden');
+          btns[key].className = "px-5 py-3.5 text-xs font-mono font-bold tracking-wider text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors whitespace-nowrap";
+        }
+      });
+
+      if (tab === 'map') {
+        setTimeout(resizeCanvas, 50);
+      }
     }
 
     async function connectLegoHub() {
       if (!navigator.bluetooth) {
         alert("Web Bluetooth is not supported on this browser!");
+        logToConsole("Browser does not support Web Bluetooth.", "error");
         return;
       }
+
+      logToConsole("Requesting Bluetooth device picker...");
 
       try {
         bleDevice = await navigator.bluetooth.requestDevice({
@@ -297,62 +410,66 @@
           ]
         });
 
+        logToConsole(`Connecting to GATT server on ${bleDevice.name || 'Hub'}...`);
         const server = await bleDevice.gatt.connect();
-        
-        let service;
+
+        lwpCharacteristic = null;
+
         try {
-          service = await server.getPrimaryService(LWP3_SERVICE_UUID);
+          const service = await server.getPrimaryService(LWP3_SERVICE_UUID);
           lwpCharacteristic = await service.getCharacteristic(LWP3_CHAR_UUID);
-        } catch(e) {
+          logToConsole("LWP3 Primary Service identified.", "success");
+        } catch (e1) {
           try {
-            service = await server.getPrimaryService(PYBRICKS_SERVICE_UUID);
+            const service = await server.getPrimaryService(PYBRICKS_SERVICE_UUID);
             lwpCharacteristic = await service.getCharacteristic(PYBRICKS_CHAR_UUID);
-          } catch(e2) {
+            logToConsole("Pybricks Service identified.", "success");
+          } catch (e2) {
             const primaryServices = await server.getPrimaryServices();
             if (primaryServices.length > 0) {
-              service = primaryServices[0];
-              const chars = await service.getCharacteristics();
+              const chars = await primaryServices[0].getCharacteristics();
               lwpCharacteristic = chars[0];
             }
           }
         }
 
         if (!lwpCharacteristic) {
-          throw new Error("Connected to Hub, but could not claim motor control characteristic.");
+          throw new Error("Could not claim motor control characteristic.");
         }
 
-        document.getElementById('ble-indicator').classList.add('online');
+        document.getElementById('ble-indicator').className = "h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]";
         document.getElementById('ble-text').innerText = "HBOT ONLINE";
+        document.getElementById('ble-text').className = "text-emerald-400 font-bold tracking-wide";
+
+        logToConsole("System Link established successfully!", "success");
         alert("HBOT Hub Connected!");
 
       } catch (err) {
-        console.error("BLE Error details:", err);
+        console.error("BLE Error:", err);
         let errorReason = err && err.message ? err.message : String(err);
         if (err.name === 'NotFoundError') return;
+        logToConsole(`Connection error: ${errorReason}`, "error");
         alert("BLE Error: " + errorReason);
       }
     }
 
-    // Official LEGO SPIKE LWP3 Output Command
     async function moveMotorPort(portHex, speed) {
       if (!lwpCharacteristic) {
         alert("Connect HBOT via Bluetooth first!");
         return;
       }
 
-      // Convert speed (-100 to 100) to signed byte (0-255 range)
       let speedByte = speed < 0 ? (256 + speed) : speed;
 
-      // LWP3 Direct Power Output Command Payload
       const command = new Uint8Array([
         0x08,       // Payload Length
         0x00,       // Hub ID
         0x81,       // Port Output Command
-        portHex,    // Port (0x00=A, 0x02=C, 0x04=E)
-        0x11,       // Executive flags
+        portHex,    // Target Port
+        0x11,       // Execution flags
         0x51,       // WriteDirectModeData
-        0x00,       // Mode 0 (Voltage Output / Power)
-        speedByte   // Speed Byte
+        0x00,       // Mode 0 (Power / Voltage)
+        speedByte   // Speed Value
       ]);
 
       try {
@@ -365,6 +482,223 @@
     async function moveDrive(speedC, speedE) {
       await moveMotorPort(PORT_C, speedC);
       await moveMotorPort(PORT_E, speedE);
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('map-canvas-container');
+      if (!container || !canvas) return;
+
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      drawMapAndPath();
+    }
+
+    function loadDefaultGridMap() {
+      const img = new Image();
+      // Generate synthetic dark grid map background
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 800;
+      tempCanvas.height = 600;
+      const tCtx = tempCanvas.getContext('2d');
+
+      tCtx.fillStyle = '#030712';
+      tCtx.fillRect(0, 0, 800, 600);
+
+      // Draw Grid lines
+      tCtx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+      tCtx.lineWidth = 1;
+      for (let x = 0; x < 800; x += 40) {
+        tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, 600); tCtx.stroke();
+      }
+      for (let y = 0; y < 600; y += 40) {
+        tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(800, y); tCtx.stroke();
+      }
+
+      // Draw synthetic room boundaries
+      tCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      tCtx.lineWidth = 4;
+      tCtx.strokeRect(40, 40, 720, 520);
+      tCtx.strokeRect(200, 150, 160, 200);
+      tCtx.strokeRect(480, 250, 200, 180);
+
+      img.src = tempCanvas.toDataURL();
+      img.onload = function() {
+        mapImage = img;
+        resizeCanvas();
+      }
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          mapImage = img;
+          clearPath();
+          resizeCanvas();
+          logToConsole("Custom floor plan loaded successfully.", "success");
+        }
+        img.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
+
+    function handleCanvasClick(e) {
+      if (isExecutingRoute) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      pathWaypoints.push({ x, y });
+      updatePathStats();
+      drawMapAndPath();
+    }
+
+    function clearPath() {
+      if (isExecutingRoute) emergencyStopRoute();
+      pathWaypoints = [];
+      updatePathStats();
+      drawMapAndPath();
+      logToConsole("Path cleared.");
+    }
+
+    function drawMapAndPath() {
+      if (!ctx || !canvas) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Draw Map Image
+      if (mapImage) {
+        ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+      }
+
+      if (pathWaypoints.length === 0) return;
+
+      // 2. Draw Connecting Route Line
+      ctx.beginPath();
+      ctx.moveTo(pathWaypoints[0].x, pathWaypoints[0].y);
+      for (let i = 1; i < pathWaypoints.length; i++) {
+        ctx.lineTo(pathWaypoints[i].x, pathWaypoints[i].y);
+      }
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 3. Draw Waypoint Pins
+      pathWaypoints.forEach((pt, idx) => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+
+        if (idx === 0) {
+          ctx.fillStyle = '#10b981'; // Start = Green
+        } else if (idx === pathWaypoints.length - 1) {
+          ctx.fillStyle = '#f43f5e'; // Target = Red
+        } else {
+          ctx.fillStyle = '#06b6d4'; // Intermediate = Cyan
+        }
+
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px JetBrains Mono';
+        ctx.fillText(idx === 0 ? 'START' : idx === pathWaypoints.length - 1 ? 'GOAL' : `P${idx}`, pt.x + 12, pt.y + 4);
+      });
+    }
+
+    function updatePathStats() {
+      const countText = document.getElementById('path-count-text');
+      const distText = document.getElementById('path-distance-text');
+      const timeText = document.getElementById('path-time-text');
+
+      countText.innerText = `${pathWaypoints.length} Points`;
+
+      let totalPx = 0;
+      for (let i = 0; i < pathWaypoints.length - 1; i++) {
+        const dx = pathWaypoints[i+1].x - pathWaypoints[i].x;
+        const dy = pathWaypoints[i+1].y - pathWaypoints[i].y;
+        totalPx += Math.sqrt(dx*dx + dy*dy);
+      }
+
+      // Standard scale: 100px = ~1 meter
+      const estMeters = (totalPx / 100).toFixed(1);
+      const estSeconds = Math.round(estMeters * 2.5);
+
+      distText.innerText = `${estMeters} m`;
+      timeText.innerText = `${estSeconds} sec`;
+    }
+
+    async function executeRoute() {
+      if (pathWaypoints.length < 2) {
+        alert("Please tap on the floor map to create at least 2 points (Start & Target)!");
+        return;
+      }
+
+      if (!lwpCharacteristic) {
+        alert("Connect HBOT via Bluetooth before executing route!");
+        return;
+      }
+
+      isExecutingRoute = true;
+      currentExecutionIndex = 0;
+      document.getElementById('execution-status-text').innerText = "DRIVING";
+      document.getElementById('execution-status-text').className = "text-emerald-400 font-bold animate-pulse";
+
+      logToConsole(`Executing route sequence (${pathWaypoints.length} waypoints)...`, "success");
+
+      // Execute leg by leg
+      runNextPathLeg();
+    }
+
+    async function runNextPathLeg() {
+      if (!isExecutingRoute || currentExecutionIndex >= pathWaypoints.length - 1) {
+        // Complete
+        await moveDrive(0, 0);
+        isExecutingRoute = false;
+        document.getElementById('execution-status-text').innerText = "ARRIVED";
+        document.getElementById('execution-status-text').className = "text-cyan-400 font-bold";
+        logToConsole("Autonomous route execution completed!", "success");
+        return;
+      }
+
+      const p1 = pathWaypoints[currentExecutionIndex];
+      const p2 = pathWaypoints[currentExecutionIndex + 1];
+
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Duration scaling
+      const driveDurationMs = Math.min(4000, Math.max(800, (distance / 100) * 2000));
+
+      logToConsole(`Leg ${currentExecutionIndex + 1}: Moving ${Math.round(distance)} px forward...`);
+
+      // Command Motors Forward
+      await moveDrive(60, -60);
+
+      currentExecutionIndex++;
+
+      routeTimeoutId = setTimeout(() => {
+        runNextPathLeg();
+      }, driveDurationMs);
+    }
+
+    async function emergencyStopRoute() {
+      if (routeTimeoutId) clearTimeout(routeTimeoutId);
+      isExecutingRoute = false;
+      await moveDrive(0, 0);
+      document.getElementById('execution-status-text').innerText = "ABORTED";
+      document.getElementById('execution-status-text').className = "text-rose-400 font-bold";
+      logToConsole("EMERGENCY STOP EXECUTED.", "error");
     }
   </script>
 </body>
